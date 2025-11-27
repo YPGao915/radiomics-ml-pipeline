@@ -1,0 +1,17 @@
+data=pd.read_excel("your_path_to_file.xlsx")
+data_train,data_test=train_test_split(data,test_size=0.3)
+#标准化和赋值
+X_train=data_train[data_train.columns[1:]]
+y_train=data_train['status']
+colNames=X_train.columns
+X_train=X_train.astype(np.float64)
+X_train=StandardScaler().fit_transform(X_train)
+X_train=pd.DataFrame(X_train)
+X_train.columns=colNames
+
+X_test=data_test[data_test.columns[1:]]
+y_test=data_test['status']
+X_test=X_test.astype(np.float64)
+X_test=StandardScaler().fit_transform(X_test)
+X_test=pd.DataFrame(X_test)
+X_test.columns=colNames
