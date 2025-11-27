@@ -16,22 +16,3 @@ multi-VOI features. The framework includes:
 
 ## Folder Structure
 See project tree in the repository.
-
-radiomics-ml-pipeline/
-├── data/
-│   ├── raw/                   # Raw imaging data (not included)
-│   ├── processed/             # Processed features and labels
-│   └── splits/                # Train/validation/test splits
-├── src/
-│   ├── preprocessing/         # Data cleaning and harmonization
-│   ├── feature_selection/     # Spearman + LASSO selection
-│   ├── models/               # ML classifiers implementation
-│   ├── evaluation/           # Metrics and visualization
-│   └── utils/               # Helper functions
-├── config/
-│   ├── paths.yaml           # Data paths configuration
-│   └── model_params.yaml    # Hyperparameter settings
-├── notebooks/               # Jupyter notebooks for exploration
-├── tests/                   # Unit tests
-├── requirements.txt         # Python dependencies
-└── run_pipeline.py         # Main execution script
