@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
+#!/usr/bin/env python3
+# cleaned_script.py
+# Core model wrapper and get_models() (Chinese comments removed)
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier
+from sklearn.model_selection import GridSearchCV
+def feature_selection(X_train, y_train):    
+    for col in X_train.columns:
+        Q1 = X_train[col].quantile(0.25)
+        Q3 = X_train[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        median = X_train[col].median()
+        X_train[col] = np.where((X_train[col] < lower_bound) | (X_train[col] > upper_bound), median, X_train[col])
+        
+    corr_matrix = X_train.corr(method='spearman')
+    corr_threshold = 0.9
+    cor_features = set()
+    for col1, col2 in combinations(X_train.columns, 2):
+        if abs(corr_matrix.loc[col1, col2]) > corr_threshold:
+            corr1, _ = spearmanr(X_train[col1], y_train)
+            corr2, _ = spearmanr(X_train[col2], y_train)
+            cor_features.add(col1 if abs(corr1) > abs(corr2) else col2)
+    cor_features = list(cor_features)
+    lasso_selected_features = []
+    if len(cor_features) > 0:
+        alphas = np.logspace(-3, 1, 50)
+        model_lassoCV = LassoCV(alphas=alphas,cv=3,max_iter=10000).fit(X_train[cor_features], y_train)
+        coef = pd.Series(model_lassoCV.coef_, index=cor_features)
+        lasso_selected_features = coef[coef != 0].index.tolist()
+    return lasso_selected_features if lasso_selected_features else []
+
+def perform_feature_selection(X_train_fold, y_train_fold, feature_counts_total, threshold=9):
+    features = feature_selection(X_train_fold, y_train_fold)
+    for feature in features:
+        feature_counts_total[feature] += 1
+    return feature_counts_total
+
+def get_final_features(feature_counts_total, threshold):
+    return [feature for feature, count in feature_counts_total.items() if count >= threshold]
+
+class ModelWrapper:
+    def __init__(self, model_class, param_grid, **kwargs):
+        self.model_class = model_class
+        self.param_grid = param_grid
+        self.kwargs = kwargs
+        self.best_model = None
+        self.grid_search = None
+
+    def train(self, X_train, y_train, selected_features, cv_strategy):
+        base_model = self.model_class(**self.kwargs)
+        self.grid_search = GridSearchCV(
+            estimator=base_model,
+            param_grid=self.param_grid,
+            cv=cv_strategy,
+            scoring='roc_auc',
+            n_jobs=-1,
+            refit=True
+        )
+        self.grid_search.fit(X_train[selected_features], y_train)
+        self.best_model = self.grid_search.best_estimator_
+        return self.best_model
+
+    def predict(self, X):
+        if self.best_model:
+            return self.best_model.predict(X)
+        else:
+            raise ValueError("Model has not been trained yet.")
+
+    def predict_proba(self, X):
+        if self.best_model:
+            return self.best_model.predict_proba(X)
+        else:
+            raise ValueError("Model has not been trained yet.")
+
+def get_models():
+    rf_params = {
+        'n_estimators': [100, 200],
+        'max_depth': [5, 10],
+        'min_samples_split': [2, 10],
+        'min_samples_leaf': [1, 2],
+        'max_features': ['sqrt']
+    }
+    xgb_params = {
+        'max_depth': [3, 5],
+        'learning_rate': [0.01, 0.1],
+        'n_estimators': [200],
+        'subsample': [0.7, 1.0],
+        'colsample_bytree': [0.7, 1.0],
+        'gamma': [0, 0.1],
+        'reg_alpha': [0, 0.1],
+        'reg_lambda': [1, 5],
+        'eval_metric': ['logloss']
+    }
+    models = {
+        'RandomForest': ModelWrapper(RandomForestClassifier, rf_params),
+        'XGBoost': ModelWrapper(XGBClassifier, xgb_params)
+    }
+    return models
+
+if __name__ == '__main__':
+    print('This module defines ModelWrapper and get_models(). Import into your pipeline.')
+
