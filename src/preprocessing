@@ -1,1 +1,69 @@
+#batch normalization
+import harmonypy as hm
+import matplotlib.pyplot as plt
+data=pd.read_excel("path_to_your_file.xlsx")
+X= df.columns
+batch_labels = pd.read_excel("path_to_your_file.xlsx")
 
+n_samples = X.shape[0]  
+batch_labels = [batch_labels] * n_samples 
+meta_data = pd.DataFrame({'batch': batch_labels})
+ho = hm.run_harmony(X.T, meta_data, theta=2,vars_use=['batch'],max_iter_harmony=20)
+harmonized = pd.DataFrame(ho.Z_corr.T, columns=x.columns)
+plt.figure(figsize=(12, 6))
+plt.subplot(121)
+plot_pca(features, batch_labels, title='Original Data')
+plt.subplot(122)
+plot_pca(harmonized, batch_labels, title='Harmony Corrected')
+plt.savefig('harmony_correction_effect.png', dpi=300)
+#ICC
+def compute_icc_for_features(df, features, threshold=0.75):
+    stable_feats = []
+    icc_vals = []
+
+    for feat in tqdm(features):
+        try:
+            icc_df = df[['patient_id', 'institution', feat]].dropna().rename(columns={feat: 'value'})
+            # ICC 分析：两向混合模型，平均测量
+            icc_result = pg.intraclass_corr(data=icc_df,
+                                            targets='patient_id',
+                                            raters='institution',
+                                            ratings='value',
+                                            nan_policy='omit')
+            icc2k = icc_result.loc[icc_result['Type'] == 'ICC2_k', 'ICC'].values[0]
+
+            if icc2k > threshold:
+                stable_feats.append(feat)
+                icc_vals.append(icc2k)
+        except Exception as e:
+            continue
+    icc_df = pd.DataFrame({'Feature': stable_feats, 'ICC': icc_vals}).sort_values(by='ICC', ascending=False)
+    if output_csv:
+        icc_df.to_csv(output_csv, index=False)
+    if plot and len(icc_vals) > 0:
+        plt.figure(figsize=(8, 5))
+        sns.histplot(icc_vals, bins=20, kde=True)
+        plt.title(f"Distribution of ICC2_k values (Threshold > {threshold})")
+        plt.xlabel("ICC2_k Value")
+        plt.ylabel("Feature Count")
+        if save_fig:
+            plt.savefig(save_fig, dpi=300, bbox_inches='tight')
+        plt.show()
+
+    if return_filtered_df:
+        filtered_df = df[['patient_id', 'institution'] + stable_feats]
+        return icc_df, filtered_df
+    else:
+        return icc_df
+features = [col for col in df.columns if col not in ['patient_id', 'institution', 'status']]
+
+icc_df, filtered_df = compute_icc_for_features(
+    df=df,
+    features=features,
+    threshold=0.75,
+    output_csv='icc_results.csv',
+    save_fig='icc_distribution.png',
+    return_filtered_df=True,
+    verbose=True,
+    plot=True
+)
