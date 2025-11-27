@@ -1,0 +1,11 @@
+numpy
+pandas
+scikit-learn
+xgboost>=1.6.0  # recommended for SHAP TreeExplainer compatibility
+shap
+matplotlib
+seaborn
+joblib
+imblearn
+scipy
+statsmodels
