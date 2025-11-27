@@ -1,12 +1,7 @@
 radiomics-ml-pipeline/
-├── data/
-│   ├── raw/                     # Raw imaging data (not included)
-│   └── splits/                  # Train/validation/test splits
 ├── src/
+│   ├── data_load/               # Raw imaging data (not included)+Train/validation/test splits
 │   ├── preprocessing/           # Data cleaning and harmonization
 │   ├── feature_selection+models/# ML classifiers implementation
 │   ├── evaluation/             # Metrics and visualization
-├── config/
-│   ├── paths.yaml             # Data paths configuration
-│   └── model_params.yaml      # Hyperparameter settings
 ├── requirements.txt           # Python dependencies
