@@ -17,4 +17,3 @@ multi-VOI features. The framework includes:
 ## Folder Structure
 See project tree in the repository.
 
-## How to Run
