@@ -1,7 +1,6 @@
 radiomics-ml-pipeline/
 ├── data/
 │   ├── raw/                   # Raw imaging data (not included)
-│   ├── processed/             # Processed features and labels
 │   └── splits/                # Train/validation/test splits
 ├── src/
 │   ├── preprocessing/         # Data cleaning and harmonization
